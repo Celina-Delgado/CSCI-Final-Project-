@@ -5,14 +5,37 @@ BUDGETS = "budgets.csv" #also not in use yet
 
 #function to set a budget for a category
 def set_budget(budgets): 
-    category = input("Enter category to budget for: ").lower()
+    category = input("Enter category to budget for: ").lower()#asks user which category they want to set budget for. 
     try:
-        amount = float(input("Enter the budget amount: "))
+        amount = float(input("Enter the budget amount: "))#user inputs the amount they want as budget 
     except ValueError:
-        print("Error: Enter a valud number")
+        print("Error: Enter a valid number")#error message for wrong input value
         return
-    budgets[category] = amount
-    print(f"Budget this amount ${amount} for {category}. \n")
+    budgets[category] = amount#sets the budget 
+    print(f"Budget this amount ${amount} for {category}. \n")#prints the budget set message for user
+
+#function to save the budget to the file 
+def save_budget(budgets): #not in use yet 
+    with open(BUDGETS,'w') as file:
+        writer = csv.DictWriter(file, fieldnames=["category", "amount"])
+        writer.writeheader()
+        for category, amount in budgets.items():
+            writer.writerow({"category": category, "amount": amount})
+    print("Budget Saved")
+
+def check_budget(transactions, budgets):
+    print("Budget Summary")
+    for category, budgets_amount in budgets.items():
+        total_spent = sum(t["amount"] for t in transactions
+        if t["type"] == "expense" and t["category"] == category)
+        remaining = budgets_amount - total_spent
+        if remaining >=0:
+            print(f" remaining: ${remaining: }")
+        else:
+            print(f"Over Budget by $ {-remaining: }")
+    print()
+
+
 
 #function to add transactions
 def add_transaction(transactions, budgets):
@@ -33,9 +56,7 @@ def add_transaction(transactions, budgets):
         "amount": amount,
         "type": "income" if transaction_type == 'i' else "expense"
     })
-    if category in budgets:
-        budget_left = budgets[category] - amount if transaction_type == 'e' else budgets[category] + amount # calculates users reamaining budget for the category based on amount and if transaction was income or expense
-        print(f"Your remaining budget for {category} is ${budget_left}") # tells user their remaining budget for the category
+    
 
 def main():
     transactions = []
@@ -45,19 +66,23 @@ def main():
         print("1. View Transactions")
         print("2. Add Transaction")
         print("3. Set Budget")
+        print("4. Check Budget")
         
-        selection = input("Choose an option (1-3): ") #prompt user to choose what to do
+        selection = input("Choose an option (1-4): ") #prompt user to choose what to do
 
         if selection == "1":
             if not transactions:
-                print("No transactions recorded.") #messge for if no transactions have been added yet
+                print("No transactions recorded.") #message for if no transactions have been added yet
             else:
                 for t in transactions:
                     print(f"You recorded a {t['type']} of ${t['amount']} for {t['category']}.")
         elif selection == "2":
-                add_transaction(transactions, budgets) #runs the add transaction method if 2 is selected
+            add_transaction(transactions, budgets) #runs the add transaction method if 2 is selected
         elif selection == "3":
-             set_budget(budgets) # runs the set budget method if 3 is selected
+            set_budget(budgets) # runs the set budget method if 3 is selected
+        elif selection == "4":
+            check_budget(transactions, budgets)
+            
                 
 
 if __name__ == "__main__":
