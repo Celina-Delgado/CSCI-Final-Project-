@@ -14,7 +14,7 @@ def set_budget(user_name, budgets):
         return
     budgets[category] = amount #sets the budget 
     print(f"Budget this amount ${amount} for {category}. \n")#prints the budget set message for user
-    save_budget(budgets) #saves the updated budget to the file
+    save_budget(user_name, budgets) #saves the updated budget to the file
     
 #function to save the budget to the file 
 def save_budget(user_name, budgets):
@@ -44,16 +44,19 @@ def load_budget(user_name):
 #function to check if expenses are within the users budget
 def check_budget(transactions, budgets):
     print("Budget Summary")
-    for category, budgets_amount in budgets.items():
-        total_spent = sum(t["amount"] for t in transactions
-            if t["type"] == "expense" and t["category"] == category) #calculates total spending of whichever category the user selects
-        remaining = budgets_amount - total_spent # calculates users remaining budget
-        if remaining >=0:
-                print(f" remaining: ${remaining: }")
+    for category, budget_amount in budgets.items():
+        total_spent = sum(
+            t["amount"] for t in transactions
+            if t["type"] == "expense" and t["category"] == category
+        )  # Calculates total spending for the category
+        remaining = budget_amount - total_spent  # Calculates the remaining budget
+        
+        if remaining >= 0:
+            print(f"{category.capitalize()}: Remaining: ${remaining:.2f}")  # Shows remaining for the category
         else:
-                print(f"Over Budget by $ {-remaining: }")
+            print(f"{category.capitalize()}: Over Budget by: ${-remaining:.2f}")  # Shows over-budget for the category
     print()
-    
+
     
 #function to save transactions to the file
 def save_transactions(user_name, transactions):
@@ -156,9 +159,9 @@ def main():
         elif selection == "2":
             add_transaction(user_name, transactions, budgets)
         elif selection == "3":
-            set_budget(budgets) 
+            set_budget(user_name, budgets) 
         elif selection == "4":
-            check_budget(user_name, transactions, budgets)
+            check_budget(transactions, budgets)
         elif selection == "5":
             print("Exiting Budget Tracker. Goodbye have a good day!")  # Exit message closing the program
             break
@@ -167,3 +170,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
