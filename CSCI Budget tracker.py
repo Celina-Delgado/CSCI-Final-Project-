@@ -39,7 +39,7 @@ def user_exists_and_authenticated(user_name, password):
                     stored_user_name, stored_password = row
                     if stored_user_name == user_name:
                         if check_password(stored_password, password):
-                            return True  # Authentication successful
+                            return True 
                         else:
                             return False  # Password does not match
     except FileNotFoundError:
@@ -73,7 +73,7 @@ def set_budget(user_name, budgets):
     try:
         amount = float(input("Enter the budget amount: "))  # User inputs the amount they want as budget.
     except ValueError:
-        print("Error: Enter a valid number.")  # Error message for wrong input value.
+        print("Error: Enter a valid number.")  # Error message for incorrect input value.
         return
     budgets[category] = amount  # Sets the budget
     print(f"Budget this amount ${amount} for {category}. \n")  # Prints the budget set message for user.
@@ -84,7 +84,7 @@ def clear_budget(user_name, budgets):
     confirmation = input("Are you sure you want to clear your entire budget? (yes/no): ").lower()
     if confirmation == 'yes':
         budgets.clear()  # Clears the budget dictionary
-        save_budget(user_name, budgets)  # Save the empty budget to the file
+        save_budget(user_name, budgets)  # Saves the empty budget to the file
         print("Your budget has been cleared.")
     else:
         print("Budget clearing operation cancelled.")
@@ -96,21 +96,21 @@ def save_budget(user_name, budgets):
         writer = csv.DictWriter(file, fieldnames=["category", "amount"])
         writer.writeheader()  # Write the header row
         for category, amount in budgets.items():
-            writer.writerow({"category": category, "amount": amount})  # Write each budget entry
+            writer.writerow({"category": category, "amount": amount})  # Writes each budget entry
     print("Budget Saved")
 
 
 # Function to load the budget from the file
 def load_budget(user_name):
     budgets = {}
-    file_name = f"budgets_{user_name}.csv"  # User-specific budget file
+    file_name = f"budgets_{user_name}.csv"  # User specific budget file
     try:
         with open(file_name, 'r') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                budgets[row["category"]] = float(row["amount"])  # Load each budget entry
+                budgets[row["category"]] = float(row["amount"])  # Loads each budget entry
     except FileNotFoundError:
-        print("No budgets file found. Starting fresh.")  # Handle missing budget file
+        print("No budgets file found. Starting fresh.")  # Handles error of missing budget file
     return budgets
 
 # Function to check if expenses are within the user's budget
@@ -182,14 +182,14 @@ def main():
     choice = input("Do you want to (1) Login or (2) Register? (1/2): ")
         
     if choice == "1":
-        user_name = login()  # Login the user
+        user_name = login()  # Logs in the user
         if not user_name:
             print("Login failed. Exiting...")
-            return  # Exit if login fails
+            return  # Exits the program if login fails
     elif choice == "2":
-        register()  # Register a new user
-        user_name = input("Please enter your username to continue: ").strip()  # Ask for username after registration
-        # Directly login after registration (no need to call login() again)
+        register()  # Registers a new user
+        user_name = input("Please enter your username to continue: ").strip()  # Asks for username after registration
+        # Direct login after registration 
         if not user_exists_and_authenticated(user_name, input("Please enter your password: ").strip()):
             print("Login failed after registration. Exiting...")
             return  # Exit if login fails
@@ -224,12 +224,12 @@ def main():
         elif selection == "4":
             check_budget(transactions, budgets)
         elif selection == "5":
-            clear_budget(user_name, budgets)  # Call the clear_budget function
+            clear_budget(user_name, budgets)  
         elif selection == "6":
             print("Exiting Budget Tracker. Goodbye!")
             break
         else:
-            print("Invalid selection. Please choose a valid option.")
+            print("Invalid selection. Please choose a valid option.") # handles error incase of invalid option being selected
 
 if __name__ == "__main__":
     main()
