@@ -1,22 +1,95 @@
 import csv
 
-TRANSACTIONS = "transactions.csv" #file to store transactions
-BUDGETS = "budgets.csv" # file to store budget data
-USERS = "users.csv"  #file to store users data
 
-#function to set a budget for a category
-def set_budget(user_name, budgets): 
-    category = input("Enter category to budget for: ").lower() #asks user which category they want to set budget for. 
+TRANSACTIONS = "transactions.csv"  # File to store transactions
+BUDGETS = "budgets.csv"  # File to store budget data
+USERS = "users.csv"  # File to store users data with passwords
+
+
+# Function to save user data (username and password)
+def save_user_data(user_name, password):
     try:
-        amount = float(input("Enter the budget amount: ")) #user inputs the amount they want as budget 
-    except ValueError:
-        print("Error: Enter a valid number")#error message for wrong input value
-        return
-    budgets[category] = amount #sets the budget 
-    print(f"Budget this amount ${amount} for {category}. \n")#prints the budget set message for user
-    save_budget(user_name, budgets) #saves the updated budget to the file
+        with open(USERS, 'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row[0] == user_name:
+                    print(f"User {user_name} already exists.")
+                    return  # Skip saving if user exists
+    except FileNotFoundError:
+        pass  # if the file doesn't exist it proceeds to save the user
+
+    with open(USERS, 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([user_name, password])  # Stores username and password
+    print(f"User {user_name} saved successfully.")
+
+
+# Function to check if the password matches the stored password
+def check_password(stored_password, entered_password):
+    return stored_password == entered_password  # checks to see if the password entered is correct
+
+
+# Function to check if the user exists and authenticate using the password
+def user_exists_and_authenticated(user_name, password):
+    try:
+        with open(USERS, 'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if len(row) == 2:  # Checks if the row has both username and password
+                    stored_user_name, stored_password = row
+                    if stored_user_name == user_name:
+                        if check_password(stored_password, password):
+                            return True  # Authentication successful
+                        else:
+                            return False  # Password does not match
+    except FileNotFoundError:
+        print("No users file found.")
+    return False  # If user doesn't exist or password is incorrect
+
+
+# Function for user login
+def login():
+    user_name = input("Please enter your username: ").strip()
+    password = input("Please enter your password: ").strip()
     
-#function to save the budget to the file 
+    if user_exists_and_authenticated(user_name, password):
+        print(f"Welcome back, {user_name}!")
+        return user_name  # Returns the authenticated user's name
+    else:
+        print("Login failed. Please try again.")
+        return None
+
+
+# Function for user registration
+def register():
+    user_name = input("Please enter your username: ").strip() # strip method removes any leading or trailing whitespace
+    password = input("Please enter your password: ").strip() 
+    save_user_data(user_name, password)
+
+
+# Function to set a budget for a category
+def set_budget(user_name, budgets):
+    category = input("Enter category to budget for: ").lower()  # Ask user which category to set a budget for.
+    try:
+        amount = float(input("Enter the budget amount: "))  # User inputs the amount they want as budget.
+    except ValueError:
+        print("Error: Enter a valid number.")  # Error message for wrong input value.
+        return
+    budgets[category] = amount  # Sets the budget
+    print(f"Budget this amount ${amount} for {category}. \n")  # Prints the budget set message for user.
+    save_budget(user_name, budgets)  # Saves the updated budget to the file.
+
+# Function to clear the budget for a user
+def clear_budget(user_name, budgets):
+    confirmation = input("Are you sure you want to clear your entire budget? (yes/no): ").lower()
+    if confirmation == 'yes':
+        budgets.clear()  # Clears the budget dictionary
+        save_budget(user_name, budgets)  # Save the empty budget to the file
+        print("Your budget has been cleared.")
+    else:
+        print("Budget clearing operation cancelled.")
+
+# Function to save the budget to the file 
 def save_budget(user_name, budgets):
     file_name = f"budgets_{user_name}.csv"  # User-specific budget file
     with open(file_name, 'w', newline='') as file:
@@ -26,7 +99,7 @@ def save_budget(user_name, budgets):
             writer.writerow({"category": category, "amount": amount})  # Write each budget entry
     print("Budget Saved")
 
-    
+
 # Function to load the budget from the file
 def load_budget(user_name):
     budgets = {}
@@ -40,8 +113,7 @@ def load_budget(user_name):
         print("No budgets file found. Starting fresh.")  # Handle missing budget file
     return budgets
 
-
-#function to check if expenses are within the users budget
+# Function to check if expenses are within the user's budget
 def check_budget(transactions, budgets):
     print("Budget Summary")
     for category, budget_amount in budgets.items():
@@ -54,16 +126,16 @@ def check_budget(transactions, budgets):
         if remaining >= 0:
             print(f"{category.capitalize()}: Remaining: ${remaining:.2f}")  # Shows remaining for the category
         else:
-            print(f"{category.capitalize()}: Over Budget by: ${-remaining:.2f}")  # Shows over-budget for the category
+            print(f"{category.capitalize()}: Over Budget by: ${-remaining:.2f}")  # Shows over budget for the category
     print()
 
-    
-#function to save transactions to the file
+
+# Function to save transactions to the file
 def save_transactions(user_name, transactions):
-    file_name = f"transactions_{user_name}.csv"  # User specific transactions file
+    file_name = f"transactions_{user_name}.csv"  # User-specific transactions file
     with open(file_name, 'w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=["category", "amount", "type"])
-        writer.writeheader()  
+        writer.writeheader()
         for transaction in transactions:
             writer.writerow(transaction)  # Writes each transaction
     print("Transactions Saved")
@@ -82,92 +154,82 @@ def load_transactions(user_name):
         print("No transactions file found. Starting fresh.")  # Handle missing transaction file/exception handling
     return transactions
 
-#function to add transactions
+
+# Function to add transactions
 def add_transaction(user_name, transactions, budgets):
-    category = input("Enter a category: ").lower() #asks user for category of  the transaction
+    category = input("Enter a category: ").lower()  # Asks user for category of the transaction
     try:
-        amount = float(input("Enter the amount: $")) #asks user for price of transaction
+        amount = float(input("Enter the amount: $"))  # Asks user for price of transaction
     except ValueError:
-        print("Error: Please enter a number") # error message for if user does not enter a number
+        print("Error: Please enter a number.")  # Error message for if user does not enter a number
         return
     
-    transaction_type = input("Income or expense? (type 'i' for income, 'e' for expense): ").lower() #asks user to choose if transaction was income or an expense
+    transaction_type = input("Income or expense? (type 'i' for income, 'e' for expense): ").lower()  # Asks user to choose if transaction was income or an expense
     if transaction_type not in ['i', 'e']:
-        print("Invalid transaction type.") #error message for if user did not type i or e
+        print("Invalid transaction type.")  # Error message for if user did not type i or e
         return
     
     transactions.append({
         "category": category,
         "amount": amount,
-        "type": "income" if transaction_type == 'i' else "expense" # adds the transaction to the list 
+        "type": "income" if transaction_type == 'i' else "expense"  # Adds the transaction to the list 
     })
     save_transactions(user_name, transactions)  # Save the updated transactions to the file
 
-    
- # Function to save user data
-def save_user_data(user_name):
-    try:
-        with open(USERS, 'r') as file: #file handling
-            if any(row[0] == user_name for row in csv.reader(file)):
-                return  # Skips saving if user already exists
-    except FileNotFoundError: #exception handling
-        pass
 
-    with open(USERS, 'a', newline='') as file: #adds the user's name to the file
-        writer = csv.writer(file)
-        writer.writerow([user_name])  # writes the new user's name as a new row in the file
 
-# Function to check if the user exists
-def user_exists(user_name):
-    try:
-        with open(USERS, 'r') as file:
-            reader = csv.reader(file)
-            return any(row[0] == user_name for row in reader)  # Check if the user's name is in the file
-    except FileNotFoundError: #exception handling
-        return False
-
-# Main program function
 def main():
-    user_name = input("Please enter your name: ").strip() #asks user to enter their name and removes any leading or trailing whitespace with the strip() method.
-    if user_exists(user_name): 
-        print(f"Welcome back, {user_name}!")
-        transactions = load_transactions(user_name)  # Load transactions for the user
-        budgets = load_budget(user_name)  # Load budgets for the user
+    choice = input("Do you want to (1) Login or (2) Register? (1/2): ")
+        
+    if choice == "1":
+        user_name = login()  # Login the user
+        if not user_name:
+            print("Login failed. Exiting...")
+            return  # Exit if login fails
+    elif choice == "2":
+        register()  # Register a new user
+        user_name = input("Please enter your username to continue: ").strip()  # Ask for username after registration
+        # Directly login after registration (no need to call login() again)
+        if not user_exists_and_authenticated(user_name, input("Please enter your password: ").strip()):
+            print("Login failed after registration. Exiting...")
+            return  # Exit if login fails
     else:
-        print(f"Hello, {user_name}! Starting a new budget tracker for you.")
-        transactions = []
-        budgets = {}
-        save_user_data(user_name)  # Save the new user's name
-
+        print("Invalid choice. Please choose 1 or 2.")
+        return
     
+    transactions = load_transactions(user_name)  # Load transactions for the user
+    budgets = load_budget(user_name)  # Load budgets for the user
+
     while True:
-        print("<Budget Tracker>")  #menu for user to select what they want to do
+        print("<Budget Tracker>") # Menu for user to select what they want to do
         print("1. View Transactions") 
         print("2. Add Transaction")
         print("3. Set Budget")
         print("4. Check Budget")
-        print("5. Exit") 
+        print("5. Clear Budget")  
+        print("6. Exit") 
         
-        selection = input("Choose an option (1-5): ") #prompt user to choose what to do
+        selection = input("Choose an option (1-6): ")  # Prompt user to choose what to do
 
         if selection == "1":
             if not transactions:
-                print("No transactions recorded.") #message for if no transactions have been added yet
+                print("No transactions recorded.")
             else:
                 for t in transactions:
                     print(f"You recorded a {t['type']} of ${t['amount']} for {t['category']}.")
         elif selection == "2":
             add_transaction(user_name, transactions, budgets)
         elif selection == "3":
-            set_budget(user_name, budgets) 
+            set_budget(user_name, budgets)
         elif selection == "4":
             check_budget(transactions, budgets)
         elif selection == "5":
-            print("Exiting Budget Tracker. Goodbye have a good day!")  # Exit message closing the program
+            clear_budget(user_name, budgets)  # Call the clear_budget function
+        elif selection == "6":
+            print("Exiting Budget Tracker. Goodbye!")
             break
         else:
-            print("Invalid selection. Please choose a valid option.")  # Handles error of invalid menu selection
+            print("Invalid selection. Please choose a valid option.")
 
 if __name__ == "__main__":
     main()
-
